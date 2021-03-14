@@ -9,6 +9,7 @@ library(ConvergenceClubs)
 library(tidyverse)
 library(janitor)
 library(tibble)
+library(data.table)
 ```
 
 
@@ -175,4 +176,188 @@ plot(mclubs.real)
 plot(mclubs.real, clubs=NULL, avgTP = TRUE, legend=TRUE)
 ```
 
+```{r}
+class(mclubs.nominal)
+```
+
+```{r}
+table.mclubs.nom <- map(mclubs.nominal, as.data.table)
+df.mclubs.nom <- rbindlist(table.mclubs.nom, fill = T, idcol = T)
+df.mclubs.nom
+```
+```{r}
+colnames(df.mclubs.nom)[5] <- "Province"
+df.mclubs.nom
+```
+
+
+```{r}
+nominal.wage.club <- as.data.frame(
+  inner_join(f.nominal.wage.log, df.mclubs.nom, by="Province") %>% 
+  select(-contains(c("id","model")))
+  ) 
+nominal.wage.club
+```
+
+#Generate relative value for all clubs
+```{r}
+relative <- list()
+for(a in 2:14) {
+  relative[[a]] <- data.frame(nominal.wage.club$Province, nominal.wage.club[,a]/mean(nominal.wage.club[,a]))
+colnames(relative[[a]])[1]<- "Province"
+colnames(relative[[a]])[2]<- 
+paste("rel",colnames(nominal.wage.club)[a],sep="_")
+}
+
+for (x in 2:13) {
+  relative[[x+1]]<-left_join(relative[[x]],relative[[x+1]], by="Province")
+}
+```
+
+```{r}
+table.relative <- map(relative, as.data.table)
+df.relative <- rbindlist(table.relative, fill = T, idcol = T) %>% drop_na()
+library(plyr)
+df.relative <- join(df.relative,nominal.wage.club,by=c('Province')) %>% 
+  select(Province,contains("rel"),clubs)
+  
+df.relative <- as.data.frame(df.relative)
+```
+
+```{r}
+colnames(df.relative) <- gsub("rel_","",colnames(df.relative))
+df.relative
+```
+
+```{r}
+df.relative.long <- df.relative %>%  pivot_longer(-c(Province,clubs), names_to = "Time", values_to="Rel_Wage")
+df.relative.long
+```
+
+```{r}
+df.relative.path <- aggregate(Rel_Wage ~ clubs + Time, df.relative.long, mean) %>% 
+  arrange(clubs)
+```
+
+```{r}
+path_all <- df.relative.path %>% 
+  ggplot(aes(x=Time,y=Rel_Wage, group=clubs, col=clubs)) + geom_line() +
+  labs(title = "Transition path of all clubs") +
+  theme_bw()
+path_all
+```
+
+#Generate relative value for within club
+#Create dataframe for each club
+```{r}
+club1 <- nominal.wage.club %>% 
+  filter(clubs == "club1")
+```
+
+```{r}
+relative.club1 <- list()
+for(a in 2:14) {
+  relative.club1[[a]] <- data.frame(club1$Province, club1[,a]/mean(club1[,a]))
+colnames(relative.club1[[a]])[1]<- "Province"
+colnames(relative.club1[[a]])[2]<- 
+paste("rel",colnames(club1)[a],sep="_")
+}
+
+for (x in 2:13) {
+  relative.club1[[x+1]]<-left_join(relative.club1[[x]],relative.club1[[x+1]], by="Province")
+}
+```
+
+
+```{r}
+table.relative.club1 <- map(relative.club1, as.data.table)
+df.relative.club1 <- rbindlist(table.relative.club1, fill = T, idcol = T) %>% drop_na()
+library(plyr)
+df.relative.club1 <- join(df.relative.club1,club1,by=c('Province')) %>% 
+  select(Province,contains("rel"),clubs)
+  
+df.relative.club1
+```
+
+```{r}
+colnames(df.relative.club1) <- gsub("rel_","",colnames(df.relative.club1))
+df.relative.club1
+```
+
+```{r}
+df.relative.club1.long <- df.relative.club1 %>%  pivot_longer(-c(Province,clubs), names_to = "Time", values_to="Rel_Wage")
+df.relative.club1.long
+```
+
+```{r}
+df.relative.club1.path <- aggregate(Rel_Wage ~ Province + Time, df.relative.club1.long, mean) %>% 
+  arrange(Province)
+```
+
+```{r}
+path_club1 <- df.relative.club1.path %>% 
+  ggplot(aes(x=Time,y=Rel_Wage, group=Province, col=Province)) + geom_line() +
+  labs(title = "Transition path of regions in Club 1") +
+  theme_bw() +
+   theme(legend.title = element_text(size = 8), 
+               legend.text = element_text(size = 8))
+path_club1
+```
+
+
+```{r}
+club2 <- nominal.wage.club %>% 
+  filter(clubs == "club2")
+```
+
+```{r}
+relative.club2 <- list()
+for(a in 2:14) {
+  relative.club2[[a]] <- data.frame(club2$Province, club2[,a]/mean(club2[,a]))
+colnames(relative.club2[[a]])[1]<- "Province"
+colnames(relative.club2[[a]])[2]<- 
+paste("rel",colnames(club2)[a],sep="_")
+}
+
+for (x in 2:13) {
+  relative.club2[[x+1]]<-left_join(relative.club2[[x]],relative.club2[[x+1]], by="Province")
+}
+```
+
+
+```{r}
+table.relative.club2 <- map(relative.club2, as.data.table)
+df.relative.club2 <- rbindlist(table.relative.club2, fill = T, idcol = T) %>% drop_na()
+library(plyr)
+df.relative.club2 <- join(df.relative.club2,club2,by=c('Province')) %>% 
+  select(Province,contains("rel"),clubs)
+  
+df.relative.club2
+```
+
+```{r}
+colnames(df.relative.club2) <- gsub("rel_","",colnames(df.relative.club2))
+df.relative.club2
+```
+
+```{r}
+df.relative.club2.long <- df.relative.club2 %>%  pivot_longer(-c(Province,clubs), names_to = "Time", values_to="Rel_Wage")
+df.relative.club2.long
+```
+
+```{r}
+df.relative.club2.path <- aggregate(Rel_Wage ~ Province + Time, df.relative.club2.long, mean) %>% 
+  arrange(Province)
+```
+
+```{r}
+path_club2 <- df.relative.club2.path %>% 
+  ggplot(aes(x=Time,y=Rel_Wage, group=Province, col=Province)) + geom_line() +
+  labs(title = "Transition path of regions in Club 2") +
+  theme_bw() +
+  theme(legend.title = element_text(size = 7), 
+               legend.text = element_text(size = 7))
+path_club2
+#ggsave("path_club2.png")
+```
 
