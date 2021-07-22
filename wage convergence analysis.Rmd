@@ -10,6 +10,7 @@ library(tidyverse)
 library(janitor)
 library(tibble)
 library(data.table)
+library(ExPanDaR)
 ```
 
 
@@ -245,6 +246,7 @@ path_all <- df.relative.path %>%
   labs(title = "Transition path of all clubs") +
   theme_bw()
 path_all
+ggsave("path_all.png", width = 9, height = 5)
 ```
 
 #Generate relative value for within club
@@ -302,6 +304,7 @@ path_club1 <- df.relative.club1.path %>%
    theme(legend.title = element_text(size = 8), 
                legend.text = element_text(size = 8))
 path_club1
+ggsave("path_club1.png", width = 9, height = 5)
 ```
 
 
@@ -358,6 +361,462 @@ path_club2 <- df.relative.club2.path %>%
   theme(legend.title = element_text(size = 7), 
                legend.text = element_text(size = 7))
 path_club2
-#ggsave("path_club2.png")
+ggsave("path_club2.png", width = 9, height = 5)
 ```
 
+#Part II: Real Wage using definition "A" of worker
+#Load the data
+```{r}
+library(readxl)
+real.wage <- read_excel("WS Labour_new.xlsx", 
+    sheet = "real_wage_A")
+real.wage
+```
+
+#Select data only from 2008 onwards and remove "Region" column, and remove the observation of Indonesia
+```{r}
+real.wage <- real.wage %>% 
+  select(-c(1,3:5)) %>% 
+  subset(Province!="National")
+```
+
+
+#Transform to long format for ploting
+```{r}
+real.wage.long <- real.wage %>% 
+  pivot_longer(!Province, names_to="Year", values_to="Wage")
+```
+
+```{r}
+real.wage.long <- as.data.frame(real.wage.long)
+real.wage.long$Year <- as.Date(as.factor(real.wage.long$Year), format = "%Y")
+```
+
+```{r}
+real.wage.long$Year <- as.factor(as.numeric(real.wage.long$Year))
+```
+
+
+```{r}
+prepare_trend_graph(real.wage.long, "Year", c("Wage"))$plot
+```
+
+```{r}
+prepare_quantile_trend_graph(real.wage.long, "Year", c(0.05, 0.25, 0.5, 0.75, 0.95), "Wage")$plot +
+  ggplot2::ylab("Wage (000 IDR)") + scale_x_continuous(breaks = 2008:2020) +
+  theme_classic() + theme(axis.text.x=element_text(angle=90))
+ggsave("wage_quantile.png", width = 9, height = 5)
+```
+
+```{r}
+graph <- prepare_quantile_trend_graph(real.wage.long[c("Year", "Wage")], "Year", c(0.05, 0.25, 0.5, 0.75, 0.95))
+graph$plot
+```
+
+
+
+
+#Plot wage of all provinces
+```{r}
+graph <- real.wage.long %>%
+ggplot(aes(x = Year, y = Wage, group=Province)) +
+geom_line(size=0.5, color = "dark gray") +
+labs(x = "Time",
+y = "Average real wage per month (thousand IDR)", color="") +
+theme(text=element_text( family="Palatino")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+  guides(col = guide_legend(nrow = 8))
+graph
+ggsave("wage_all.png", width = 9, height = 5)
+```
+
+
+```{r}
+#install.packages("ggplotFL", repos="http://flr-project.org/R")
+library(ggplotFL)
+```
+
+
+```{r}
+G <- ggplot(real.wage.long, aes(x=Year, y=Wage)) +
+  geom_flquantiles(probs=c(0.25, 0.50, 0.75), fill="red", alpha=0.25, show.legend=TRUE) + labs(x = "Time",
+y = "Real wage", color="") + theme_classic()
+G
+ggsave("quantile.png")
+```
+
+```{r}
+library(skimr)
+```
+
+```{r}
+desc <- real.wage.long %>% 
+  group_by(Province) %>% 
+  skim() 
+```
+
+```{r}
+desc <- desc %>% 
+  select(!c(4:10))
+```
+
+```{r}
+desc <- desc %>% 
+ drop_na() %>% 
+  write_excel_csv2("desc_stat.csv")
+```
+
+
+
+#Transform the wage series to log
+```{r}
+real.wage.log <- log(real.wage[,-1])
+real.wage.log
+```
+
+#Remove short-run noise using HP filter
+```{r}
+f.real.wage.log <- apply(real.wage.log, 1, 
+function(x){mFilter::hpfilter(x, freq=6.25, type="lambda")$trend} ) 
+f.real.wage.log <- data.frame(Province = real.wage[,1], t(f.real.wage.log), stringsAsFactors=FALSE ) 
+colnames(f.real.wage.log) <- colnames(real.wage) 
+```
+
+#Inspect the filtered data
+```{r}
+head(f.real.wage.log)
+```
+
+#Run the log-t-test
+```{r}
+H.real <- computeH(f.real.wage.log[,-1], quantity = "H")
+round(estimateMod(H.real, time_trim=0.333, HACmethod = "FQSB"), 3)
+```
+
+#find convergence clubs
+```{r}
+clubs.real <- findClubs(f.real.wage.log, dataCols=2:14, unit_names = 1, refCol=14,
+time_trim=0.333, cstar=0, HACmethod = 'FQSB')
+```
+
+```{r}
+summary(clubs.real)
+```
+
+#We find three club convergence fo nominal wage
+
+
+#Show the membership (provinces) of each club 
+
+```{r}
+print(clubs.real)
+```
+
+```{r}
+plot(clubs.real)
+```
+
+```{r}
+plot(clubs.real, clubs=NULL, avgTP = TRUE, legend=TRUE)
+```
+
+#Merge clubs
+```{r}
+mclubs.real <- mergeClubs(clubs.real, mergeMethod='PS')
+summary(mclubs.real)
+```
+
+```{r}
+mclubs.real
+```
+
+```{r}
+plot(mclubs.real)
+```
+
+```{r}
+plot(mclubs.real, clubs=NULL, avgTP = TRUE, legend=TRUE)
+```
+
+#Convert clubs from list object to dataframe
+```{r}
+table.mclubs.real <- map(mclubs.real, as.data.table)
+df.mclubs.real <- rbindlist(table.mclubs.real, fill = T, idcol = T)
+df.mclubs.real
+```
+
+```{r}
+colnames(df.mclubs.real)[c(1,5)] <- c("Club","Province")
+df.mclubs.real
+```
+
+```{r}
+real.wage.club <- as.data.frame(
+  inner_join(f.real.wage.log, df.mclubs.real, by="Province") %>% 
+  select(-contains(c("clubs","id","model")))
+  ) 
+real.wage.club
+```
+
+```{r}
+real.wage.club$Club <- gsub("club", "Club ", real.wage.club$Club)
+real.wage.club
+```
+
+#Transition path of all clubs
+```{r}
+relative.real <- list()
+for(a in 2:14) {
+  relative.real[[a]] <- data.frame(real.wage.club$Province, real.wage.club[,a]/mean(real.wage.club[,a]))
+colnames(relative.real[[a]])[1]<- "Province"
+colnames(relative.real[[a]])[2]<- 
+paste("rel",colnames(real.wage.club)[a],sep="_")
+}
+
+for (x in 2:13) {
+  relative.real[[x+1]]<-left_join(relative.real[[x]],relative.real[[x+1]], by="Province")
+}
+```
+
+```{r}
+table.relative.real <- map(relative.real, as.data.table)
+df.relative.real <- rbindlist(table.relative.real, fill = T, idcol = T) %>% drop_na()
+library(plyr)
+df.relative.real <- join(df.relative.real,real.wage.club,by=c('Province')) %>% 
+  select(Province,contains("rel"),Club)
+  
+df.relative.real <- as.data.frame(df.relative.real)
+```
+
+```{r}
+colnames(df.relative.real) <- gsub("rel_","",colnames(df.relative.real))
+df.relative.real
+```
+
+```{r}
+df.relative.real.long <- df.relative.real %>%  pivot_longer(-c(Province,Club), names_to = "Time", values_to="Rel_Wage")
+df.relative.real.long
+```
+
+```{r}
+df.relative.real.path <- aggregate(Rel_Wage ~ Club + Time, df.relative.real.long, mean) %>% 
+  arrange(Club)
+```
+
+```{r}
+path_all.real <- df.relative.real.path %>% 
+  ggplot(aes(x=Time,y=Rel_Wage, group=Club, col=Club)) + geom_line() +
+labs(x = "Time",
+y = "Relative transition paths of all clubs", color="") +
+theme(text=element_text( family="Palatino")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+  guides(col = guide_legend(nrow = 8))
+path_all.real
+ggsave("path_all.real.png", width = 9, height = 5)
+```
+
+#Transition path of each club
+#Club 1
+```{r}
+club1.real <- real.wage.club %>% 
+  filter(Club == "Club 1")
+```
+
+```{r}
+relative.club1.real <- list()
+for(a in 2:14) {
+  relative.club1.real[[a]] <- data.frame(club1.real$Province, club1.real[,a]/mean(club1.real[,a]))
+colnames(relative.club1.real[[a]])[1]<- "Province"
+colnames(relative.club1.real[[a]])[2]<- 
+paste("rel",colnames(club1.real)[a],sep="_")
+}
+
+for (x in 2:13) {
+  relative.club1.real[[x+1]]<-left_join(relative.club1.real[[x]],relative.club1.real[[x+1]], by="Province")
+}
+```
+
+
+```{r}
+table.relative.club1.real <- map(relative.club1.real, as.data.table)
+df.relative.club1.real <- rbindlist(table.relative.club1.real, fill = T, idcol = T) %>% drop_na()
+library(plyr)
+df.relative.club1.real <- join(df.relative.club1.real,club1.real,by=c('Province')) %>% 
+  select(Province,contains("rel"),Club)
+  
+df.relative.club1.real
+```
+
+```{r}
+colnames(df.relative.club1.real) <- gsub("rel_","",colnames(df.relative.club1.real))
+df.relative.club1.real
+```
+
+```{r}
+df.relative.club1.real.long <- df.relative.club1.real %>%  pivot_longer(-c(Province,Club), names_to = "Time", values_to="Rel_Wage")
+df.relative.club1.real.long
+```
+
+```{r}
+df.relative.club1.real.path <- aggregate(Rel_Wage ~ Province + Time, df.relative.club1.real.long, mean) %>% 
+  arrange(Province)
+```
+
+```{r}
+path_club1.real <- df.relative.club1.real.path %>% 
+  ggplot(aes(x=Time,y=Rel_Wage, group=Province, col=Province)) + geom_line() +
+labs(x = "Time",
+y = "Relative transition paths of provinces in Club 1", color="") +
+theme(text=element_text( family="Palatino")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+  guides(col = guide_legend(nrow = 8))
+path_club1.real
+ggsave("path_club1.real.png", width = 9, height = 5)
+```
+
+#Club 2
+```{r}
+club2.real <- real.wage.club %>% 
+  filter(Club == "Club 2")
+```
+
+```{r}
+relative.club2.real <- list()
+for(a in 2:14) {
+  relative.club2.real[[a]] <- data.frame(club2.real$Province, club2.real[,a]/mean(club2.real[,a]))
+colnames(relative.club2.real[[a]])[1]<- "Province"
+colnames(relative.club2.real[[a]])[2]<- 
+paste("rel",colnames(club2.real)[a],sep="_")
+}
+
+for (x in 2:13) {
+  relative.club2.real[[x+1]]<-left_join(relative.club2.real[[x]],relative.club2.real[[x+1]], by="Province")
+}
+```
+
+
+```{r}
+table.relative.club2.real <- map(relative.club2.real, as.data.table)
+df.relative.club2.real <- rbindlist(table.relative.club2.real, fill = T, idcol = T) %>% drop_na()
+library(plyr)
+df.relative.club2.real <- join(df.relative.club2.real,club2.real,by=c('Province')) %>% 
+  select(Province,contains("rel"),Club)
+  
+df.relative.club2.real
+```
+
+```{r}
+colnames(df.relative.club2.real) <- gsub("rel_","",colnames(df.relative.club2.real))
+df.relative.club2.real
+```
+
+```{r}
+df.relative.club2.real.long <- df.relative.club2.real %>%  pivot_longer(-c(Province,Club), names_to = "Time", values_to="Rel_Wage")
+df.relative.club2.real.long
+```
+
+```{r}
+df.relative.club2.real.path <- aggregate(Rel_Wage ~ Province + Time, df.relative.club2.real.long, mean) %>% 
+  arrange(Province)
+```
+
+```{r}
+path_club2.real <- df.relative.club2.real.path %>% 
+  ggplot(aes(x=Time,y=Rel_Wage, group=Province, col=Province)) + geom_line() +
+labs(x = "Time",
+y = "Relative transition paths of provinces in Club 2", color="") +
+theme(text=element_text( family="Palatino")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+  guides(col = guide_legend(nrow = 8))
+path_club2.real
+ggsave("path_club2.real.png", width = 9, height = 5)
+```
+
+#Club 3
+```{r}
+club3.real <- real.wage.club %>% 
+  filter(Club == "Club 3")
+```
+
+```{r}
+relative.club3.real <- list()
+for(a in 2:14) {
+  relative.club3.real[[a]] <- data.frame(club3.real$Province, club3.real[,a]/mean(club3.real[,a]))
+colnames(relative.club3.real[[a]])[1]<- "Province"
+colnames(relative.club3.real[[a]])[2]<- 
+paste("rel",colnames(club3.real)[a],sep="_")
+}
+
+for (x in 2:13) {
+  relative.club3.real[[x+1]]<-left_join(relative.club3.real[[x]],relative.club3.real[[x+1]], by="Province")
+}
+```
+
+
+```{r}
+table.relative.club3.real <- map(relative.club3.real, as.data.table)
+df.relative.club3.real <- rbindlist(table.relative.club3.real, fill = T, idcol = T) %>% drop_na()
+library(plyr)
+df.relative.club3.real <- join(df.relative.club3.real,club3.real,by=c('Province')) %>% 
+  select(Province,contains("rel"),Club)
+  
+df.relative.club3.real
+```
+
+```{r}
+colnames(df.relative.club3.real) <- gsub("rel_","",colnames(df.relative.club3.real))
+df.relative.club3.real
+```
+
+```{r}
+df.relative.club3.real.long <- df.relative.club3.real %>%  pivot_longer(-c(Province,Club), names_to = "Time", values_to="Rel_Wage")
+df.relative.club3.real.long
+```
+
+```{r}
+df.relative.club3.real.path <- aggregate(Rel_Wage ~ Province + Time, df.relative.club3.real.long, mean) %>% 
+  arrange(Province)
+```
+
+```{r}
+path_club3.real <- df.relative.club3.real.path %>% 
+  ggplot(aes(x=Time,y=Rel_Wage, group=Province, col=Province)) + geom_line() +
+labs(x = "Time",
+y = "Relative transition paths of provinces in Club 3", color="") +
+theme(text=element_text( family="Palatino")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+  guides(col = guide_legend(nrow = 8))
+path_club3.real
+ggsave("path_club3.real.png", width = 9, height = 5)
+```
+
+
+
+
+
+# Logit model
+# Load the data
+```{r}
+library(readxl)
+logit <- read_excel("WS Labour_new.xlsx", 
+    sheet = "logit")
+logit
+```
+
+```{r}
+logit$clubs <- factor(logit$clubs)
+```
+
+```{r}
+logit <- logit %>% 
+  mutate(lngrdp = log(grdp))
+```
+
+```{r}
+glimpse(logit)
+```
+
+```{r}
+mylogit <- glm(clubs ~ real_wage_2008 + lbr_prod_g +  lngrdp  + poverty, data = logit, family = "binomial")
+summary(mylogit)
+```
