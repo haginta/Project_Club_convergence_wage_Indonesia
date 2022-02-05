@@ -1,0 +1,92 @@
+---
+title: "Club convergence using base year 2008"
+output: html_notebook
+---
+
+
+
+#Activate necessary libraries
+```{r}
+library(ConvergenceClubs)
+library(tidyverse)
+library(janitor)
+library(tibble)
+library(data.table)
+library(ExPanDaR)
+```
+
+#Load the data
+```{r}
+library(readxl)
+real.wage <- read_excel("WS Labour_new.xlsx", 
+    sheet = "real_wage_A_2008")
+real.wage
+```
+
+#Select data only from 2008 onwards and remove "Region" column, and remove the observation of Indonesia
+```{r}
+real.wage1 <- real.wage %>% 
+  select(-c(1)) %>% 
+  subset(Province!="National")
+```
+
+#transform the wage series to log
+```{r}
+real.wage.log <- log(real.wage1[,-1])
+real.wage.log
+```
+
+#Remove short-run noise using HP filter
+```{r}
+f.real.wage.log <- apply(real.wage.log, 1, 
+function(x){mFilter::hpfilter(x, freq=6.25, type="lambda")$trend} ) 
+f.real.wage.log <- data.frame(Province = real.wage1[,1], t(f.real.wage.log), stringsAsFactors=FALSE ) 
+colnames(f.real.wage.log) <- colnames(real.wage1) 
+```
+
+#Inspect the filtered data
+```{r}
+head(f.real.wage.log)
+```
+
+#Run the log-t-test
+```{r}
+H.real <- computeH(f.real.wage.log[,-1], quantity = "H")
+round(estimateMod(H.real, time_trim=0.333, HACmethod = "FQSB"), 3)
+```
+
+#find convergence clubs
+```{r}
+clubs.real <- findClubs(f.real.wage.log, dataCols=2:14, unit_names = 1, refCol=14,
+time_trim=0.333, cstar=0, HACmethod = 'FQSB')
+```
+
+```{r}
+summary(clubs.real)
+```
+
+```{r}
+print(clubs.real)
+```
+
+```{r}
+plot(clubs.real)
+```
+
+```{r}
+plot(clubs.real, clubs=NULL, avgTP = TRUE, legend=TRUE)
+```
+
+#Merge clubs
+```{r}
+mclubs.real <- mergeClubs(clubs.real, mergeMethod='PS')
+summary(mclubs.real)
+```
+
+```{r}
+mclubs.real
+```
+
+
+
+

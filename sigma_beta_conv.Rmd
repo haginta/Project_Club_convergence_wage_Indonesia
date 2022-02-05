@@ -1,0 +1,141 @@
+---
+title: "CV, Sigma and Beta convergence"
+output: html_notebook
+---
+
+#Activate necessary libraries
+```{r}
+library(ConvergenceClubs)
+library(tidyverse)
+library(janitor)
+library(tibble)
+library(data.table)
+library(ExPanDaR)
+library(REAT) # Regional Economic Analysis Toolbox
+```
+
+#Load the data: base 2005
+```{r}
+library(readxl)
+real.wage <- read_excel("WS Labour_new.xlsx", 
+    sheet = "real_wage_A")
+real.wage
+```
+
+#Select data only from 2008 onwards and remove "Region" column, and remove the observation of Indonesia
+```{r}
+real.wage <- real.wage %>% 
+  select(-c(3:5)) %>% 
+  subset(Province!="National")
+```
+
+#sigma convergence
+```{r}
+sigma_anova_sd_log <- sigmaconv(
+          real.wage$`2008`,
+          2008,
+          real.wage$`2020`,
+          2020,
+          sigma.measure = "sd",
+          sigma.log = TRUE, # Fist take log of Y, and then do the analysis
+          output.results = TRUE
+          )
+```
+
+```{r}
+sigma_trend_sd_log <- sigmaconv.t(
+  real.wage$`2008`,
+  2008,
+  real.wage[4:15],
+  2020,
+  sigma.measure = "sd",
+  sigma.log = TRUE, # Fist take log of x, and then do the
+  output.results = TRUE
+  )
+```
+
+#Beta convergence
+```{r}
+betaconv_ols <- betaconv.ols (real.wage$`2008`,
+              2008,
+              real.wage$`2020`,
+              2020,
+              conditions = NULL, 
+              beta.plot = TRUE,
+              beta.plotLine = TRUE, 
+              beta.plotLineCol = "red", 
+              beta.plotX = "Ln (initial)", 
+              beta.plotY = "Growth", 
+              beta.plotTitle = "Beta convergence", 
+              beta.bgrid = TRUE, 
+              beta.bgridType = "solid",
+              output.results = TRUE)
+```
+
+```{r}
+betaconv_ols[["regdata"]] %>% 
+  ggplot(aes(x = ln_initial, y = growth)) +
+  geom_point() +
+  geom_smooth(method = lm) + 
+  theme_minimal() +
+  labs(subtitle = "Growth of wage (2008-2020)",
+       x = "Log of wage in 2008",
+       y = "")
+```
+
+#Load the data: base 2008
+```{r}
+library(readxl)
+real.wage08 <- read_excel("WS Labour_new.xlsx", 
+    sheet = "real_wage_A_2008")
+real.wage08
+```
+
+#Select data only from 2008 onwards and remove "Region" column, and remove the observation of Indonesia
+```{r}
+real.wage08 <- real.wage08 %>% 
+  subset(Province!="National")
+```
+
+#sigma convergence
+```{r}
+sigma_anova_sd_log <- sigmaconv(
+          real.wage08$`2008`,
+          2008,
+          real.wage08$`2020`,
+          2020,
+          sigma.measure = "sd",
+          sigma.log = TRUE, # Fist take log of Y, and then do the analysis
+          output.results = TRUE
+          )
+```
+
+#Beta convergence
+```{r}
+betaconv_ols08 <- betaconv.ols (real.wage08$`2008`,
+              2008,
+              real.wage08$`2020`,
+              2020,
+              conditions = NULL, 
+              beta.plot = TRUE,
+              beta.plotLine = TRUE, 
+              beta.plotLineCol = "red", 
+              beta.plotX = "Ln (initial)", 
+              beta.plotY = "Growth", 
+              beta.plotTitle = "Beta convergence", 
+              beta.bgrid = TRUE, 
+              beta.bgridType = "solid",
+              output.results = TRUE)
+```
+
+```{r}
+betaconv_ols08[["regdata"]] %>% 
+  ggplot(aes(x = ln_initial, y = growth)) +
+  geom_point() +
+  geom_smooth(method = lm) + 
+  theme_minimal() +
+  labs(subtitle = "Growth of wage (2008-2020)",
+       x = "Log of wage in 2020",
+       y = "")
+```
+

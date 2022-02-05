@@ -373,13 +373,47 @@ real.wage <- read_excel("WS Labour_new.xlsx",
 real.wage
 ```
 
+#Regional wage faceted by region
+```{r}
+df <- real.wage %>% 
+  select(-c(3:5)) %>% 
+  subset(Province!="National")
+df
+```
+
+#Transform to long format for ploting
+```{r}
+df.long <- df %>% 
+  pivot_longer(!c(Region, Province), names_to="Year", values_to="Wage")
+df.long$Year <- as.factor(df.long$Year)
+```
+
+```{r}
+df.long$Region_f = factor(df.long$Region, levels=c('Sumatra','Java','Bali-Nustra','Kalimantan', 'Sulawesi', 'Maluku-Papua'))
+```
+
+```{r}
+ggplot(df.long, aes(Year, Wage, group=Province)) + geom_line(size=0.3) +
+  facet_wrap(~Region_f) +
+  theme(
+    axis.text.x=element_text(angle=90,hjust=0.5, size=7),
+    axis.text.y=element_text(size=7),
+    panel.background = element_blank(),
+    axis.title=element_text(size=8),
+    strip.text = element_text(size=8)
+    ) +
+  labs(y="Monthly real wage (000 IDR)", size=3)
+ggsave("wage.plot.png")
+```
+
+
+
 #Select data only from 2008 onwards and remove "Region" column, and remove the observation of Indonesia
 ```{r}
 real.wage <- real.wage %>% 
   select(-c(1,3:5)) %>% 
   subset(Province!="National")
 ```
-
 
 #Transform to long format for ploting
 ```{r}
@@ -403,17 +437,15 @@ prepare_trend_graph(real.wage.long, "Year", c("Wage"))$plot
 
 ```{r}
 prepare_quantile_trend_graph(real.wage.long, "Year", c(0.05, 0.25, 0.5, 0.75, 0.95), "Wage")$plot +
-  ggplot2::ylab("Wage (000 IDR)") + scale_x_continuous(breaks = 2008:2020) +
-  theme_classic() + theme(axis.text.x=element_text(angle=90))
-ggsave("wage_quantile.png", width = 9, height = 5)
+  ggplot2::ylab("Real wage (000 IDR)") + scale_x_continuous(breaks = 2008:2020) +
+  theme_classic() + guides(color=guide_legend("Quantile")) + theme(axis.text.x=element_text(angle=90, size=10))
+#ggsave("wage_quantile.png", width = 9, height = 5)
 ```
 
 ```{r}
 graph <- prepare_quantile_trend_graph(real.wage.long[c("Year", "Wage")], "Year", c(0.05, 0.25, 0.5, 0.75, 0.95))
 graph$plot
 ```
-
-
 
 
 #Plot wage of all provinces
@@ -457,7 +489,7 @@ desc <- real.wage.long %>%
 
 ```{r}
 desc <- desc %>% 
-  select(!c(4:10))
+  select(!c(4:8))
 ```
 
 ```{r}
@@ -502,7 +534,6 @@ time_trim=0.333, cstar=0, HACmethod = 'FQSB')
 ```{r}
 summary(clubs.real)
 ```
-
 #We find three club convergence fo nominal wage
 
 
@@ -663,7 +694,7 @@ df.relative.club1.real.path <- aggregate(Rel_Wage ~ Province + Time, df.relative
 ```
 
 ```{r}
-path_club1.real <- df.relative.club1.real.path %>% 
+a <- path_club1.real <- df.relative.club1.real.path %>% 
   ggplot(aes(x=Time,y=Rel_Wage, group=Province, col=Province)) + geom_line() +
 labs(x = "Time",
 y = "Relative transition paths of provinces in Club 1", color="") +
@@ -671,7 +702,7 @@ theme(text=element_text( family="Palatino")) + theme(panel.grid.major = element_
 panel.background = element_blank(), axis.line = element_line(colour = "black")) 
   guides(col = guide_legend(nrow = 8))
 path_club1.real
-ggsave("path_club1.real.png", width = 9, height = 5)
+#ggsave("path_club1.real.png", width = 9, height = 5)
 ```
 
 #Club 2
@@ -721,7 +752,7 @@ df.relative.club2.real.path <- aggregate(Rel_Wage ~ Province + Time, df.relative
 ```
 
 ```{r}
-path_club2.real <- df.relative.club2.real.path %>% 
+b<-path_club2.real <- df.relative.club2.real.path %>% 
   ggplot(aes(x=Time,y=Rel_Wage, group=Province, col=Province)) + geom_line() +
 labs(x = "Time",
 y = "Relative transition paths of provinces in Club 2", color="") +
@@ -731,6 +762,12 @@ panel.background = element_blank(), axis.line = element_line(colour = "black"))
 path_club2.real
 ggsave("path_club2.real.png", width = 9, height = 5)
 ```
+
+```{r}
+library(plotly)
+ggplotly(b)
+```
+
 
 #Club 3
 ```{r}
@@ -779,7 +816,7 @@ df.relative.club3.real.path <- aggregate(Rel_Wage ~ Province + Time, df.relative
 ```
 
 ```{r}
-path_club3.real <- df.relative.club3.real.path %>% 
+c <- path_club3.real <- df.relative.club3.real.path %>% 
   ggplot(aes(x=Time,y=Rel_Wage, group=Province, col=Province)) + geom_line() +
 labs(x = "Time",
 y = "Relative transition paths of provinces in Club 3", color="") +
@@ -787,11 +824,12 @@ theme(text=element_text( family="Palatino")) + theme(panel.grid.major = element_
 panel.background = element_blank(), axis.line = element_line(colour = "black")) 
   guides(col = guide_legend(nrow = 8))
 path_club3.real
-ggsave("path_club3.real.png", width = 9, height = 5)
+#ggsave("path_club3.real.png", width = 9, height = 5)
 ```
 
-
-
+```{r}
+ggplotly(c)
+```
 
 
 # Logit model
@@ -804,7 +842,8 @@ logit
 ```
 
 ```{r}
-logit$clubs <- factor(logit$clubs)
+logit$clubs_real <- factor(logit$clubs_real)
+logit$clubs_real08 <- factor(logit$clubs_real08)
 ```
 
 ```{r}
@@ -817,6 +856,6 @@ glimpse(logit)
 ```
 
 ```{r}
-mylogit <- glm(clubs ~ real_wage_2008 + lbr_prod_g +  lngrdp  + poverty, data = logit, family = "binomial")
+mylogit <- glm(clubs ~ real_wage_2008 + emp_manu + pmtb_gdrp  + tpak + lngrdp, data = logit, family = "binomial")
 summary(mylogit)
 ```
