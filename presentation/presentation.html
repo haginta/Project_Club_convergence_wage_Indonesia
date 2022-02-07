@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Testing convergence clubs in real wage across Indonesian provinces   </title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Bank Indonesia, Nagoya University         7 February 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Testing convergence clubs in real wage across Indonesian provinces <br/><br/>
+## M. Rifki Maulana, Harry Aginta <br/>
+### Bank Indonesia, Nagoya University <br/><br/><br/><br/> <br/><br/> 7 February 2022
+
+---
+
+
+
+
+
+
+
+# Summary of the presentation
+
+1. Backgrounds
+  - Prolonged **regional income disparity** problems in Indonesia 
+  - Persistent **disparity in regional wage** across Indonesian provinces, **despite improvement in regional connectivity**
+--
+
+
+2. Methods
+  - Club convergence approach (Phillips &amp; Sul, 2007,2009)
+  - Ordered logit model
+--
+
+
+3. Data
+  - Net real income per month received by a general worker (in thousand IDR)
+--
+
+
+4. Main results
+  - **No overall convergence** in regional wage
+  - Presence of **three club convergence**
+  - Influencing factors of club convergence: initial level of wage, share of employment in manufacturing, investment share to GDP, and labor force participation rate
+--
+&lt;br/&gt;&lt;br/&gt;
+Computational notebook is available [***here***](https://deepnote.com/@harry-aginta/R-Club-convergence-of-regional-wage-across-Indonesian-provinces-in-R-ByLPKCPWQ-OuPjMPryU7aQ)
+
+---
+class: middle
+
+### Introduction:
+- Increasing trend of **disparity in regional wage** (income disparity declines) 
+.center[&lt;img src="cv-income.png" width="1000" height="200"/&gt;]
+
+--
+  
+### Objectives:
+- To investigate regional wage convergence, **beyond average**.
+- To study the underlying regions' charactertics influencing **club convergence**.
+
+--
+
+### Data:
+- Net real income per month received by a general worker - not regional minimum wage
+- Determinants of clubs: initial condition and various regional economic variables 
+- Coverage: 34 provinces over 2008-2020 period
+    
+
+---
+class: middle
+
+## The methods:
+- Club convergence (Phillips &amp; Sul, 2007, 2009)
+
+.center[&lt;img src="club_illust2.png" width="450" height="250"/&gt;]
+
+- Ordered logit model (cross-section) &lt;br/&gt;
+`$$Y_{i}=\beta X_{i} + \epsilon_{i}$$`
+`\(Y_{i}\)` is ordered category of club convergence (club=1,2,3...)  &lt;br/&gt;
+`\(X_{i}\)` set of explanatory variables
+
+---
+class: middle
+
+## Stylized facts
+- The distribution shows sign of club convergence
+
+.center[&lt;img src="quantile.png" width="500" height="300"/&gt;]
+
+---
+
+
+class: middle
+
+## The results
+### No overall convergence; presence of club convergence
+
+.center[&lt;img src="table-1.png" alt="drawing" width="600" height="100"/&gt;]
+
+--
+
+.center[&lt;img src="table-2.png" alt="drawing" width="600" height="250"/&gt;]
+
+---
+class: middle
+
+## The results (con't...)
+### Prolonged disparity between clubs...
+
+.center[&lt;img src="transition-all.png" alt="drawing" width="600" height="350"/&gt;]
+
+---
+class: middle
+
+## The results (con't...)
+### ...smaller gaps within club
+
+.center[&lt;img src="transition-clubs.png" alt="drawing" width="600" height="400"/&gt;]
+
+---
+class: middle
+
+## The results (con't...)
+### Spatial distribution of clubs
+
+- No clear spatial pattern of **developed west vs lagging east** (as usually seen when studying income)
+- Opposite spatial patterns between wage and income (further studies needed)
+
+.center[&lt;img src="club_map.png" alt="drawing" width="650" height="300"/&gt;]
+
+---
+class: middle
+
+## The results (con't...)
+### Influencing factors of club convergence
+
+.center[&lt;img src="table4.png" alt="drawing" width="600" height="400"/&gt;]
+
+---
+class: middle
+## Conclusions
+
+- **Increasing trend** in regional **wage dispersion** in Indonesia
+
+- **No overall convergence in regional wage**; instead **three club convergence** identified
+
+- The **spatial distribution of wage** convergence clubs is different to that for regional **income** 
+
+- Regional **labor market characteristics** influence the club convergence formation (e.g., initial level of wage, share of employment in manufacturing, investment share to GDP, and labor force participation rate)
+
+--
+
+## Limitations and further research avenues
+
+- Investigate the significance of **spatial dependence** in two ways:
+  - Spatial dependence in regional wage **dynamics**
+  - Spatial dependence in **club convergence determinants**
+
+- Calling for further investigations to study **the opposite spatial patterns between regional wage and income convergence**.
+
+---
+
+class: center, middle
+
+# Thank you very much for your attention
+
+&lt;!--**https://haginta.github.io/Harry-Aginta/**--&gt;
+
+&lt;!--Slides and working paper available at: &lt;br/&gt;
+**https://haginta.github.io/IRSA-slides/IRSA_slides.html#1**--&gt;
+
+
+**Quantitative Regional and Computational Science lab**
+
+**https://quarcs-lab.org/** &lt;br/&gt;
+&lt;img src="QuaRCS_logo.png" width="200"&gt;
+
+**https://haginta.github.io/Harry-Aginta/**
+
+
+***
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
